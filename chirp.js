@@ -7,6 +7,11 @@ var ids = [];
 
 var currentChirp = '';
 
+if( typeof console == 'undefined' || console == null )
+{
+  var console = { log: function( msg ) {  } };
+}
+
 window.onload = function()
 {
   store = new Persist.Store( 'Chirp' );
@@ -92,7 +97,7 @@ function chirpList()
     var chirp = chirps[ i ];
     if( typeof chirp.title == 'undefined' || chirp.title == null ) chirp.title = chirp.content;    
     html += '<div class="chirp" onclick="chirpView( \'' + i + '\' );">';
-    html += '<input type="checkbox" id="sel_' + i + '" onclick="event.stopPropagation();" />'
+    html += '<input type="checkbox" id="sel_' + i + '" onclick="try { event.stopPropagation(); } catch( e ) { event.cancelBubble = true; }" />'
     html += chirp.title;
     html += '</div>';
     count++;
@@ -251,7 +256,6 @@ function chirpOut( content, mime, callback )
       chirps[ 'chirp_' + chirp.shortcode ] = chirp;
       store.set( 'chirps', JSON.stringify( chirps ) );
       var code = 'hj' + chirp.longcode;
-      var audio = new Audio(); 
       var wave = new RIFFWAVE(); 
       var data = [];
       wave.header.sampleRate = 44100; 
@@ -274,12 +278,27 @@ function chirpOut( content, mime, callback )
       }
       wave.Make( data );
       var dataURI = wave.dataURI;
-      audio.src = dataURI;
+      try
+      {
+        var audio = new Audio();       
+        audio.src = dataURI;
+        var dancer = new Dancer();
+        dancer.waveform( document.getElementById( 'waveform' ), { strokeStyle: '#ffffff', strokeWidth: 2 } );
+        dancer.load( audio );
+        dancer.play();        
+      }
+      catch( e )
+      {
+        console.log( e );
+        xhr( 'POST', 'audio_old.php', 'datauri=' + escape( dataURI ), function( r ) {
+          if( r.readyState == 4 ) {
+            var html = '';
+            html += '<embed autoplay="true" src="audio_old.php?id=' + r.responseText + '"></embed>';
+            document.getElementById( 'audio_old' ).innerHTML = html;
+          }         
+        } );
+      }
       if( chirp.is_new == 1 ) store.set( 'datauri_' + chirp.shortcode, dataURI );
-      var dancer = new Dancer();
-      dancer.waveform( document.getElementById( 'waveform' ), { strokeStyle: '#ffffff', strokeWidth: 2 } );
-      dancer.load( audio );
-      dancer.play();
       setTimeout( callback, 1500 );
     }
   } );
