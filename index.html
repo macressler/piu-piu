@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>pi&uacute;-pi&uacute;</title>
+  <link rel="stylesheet" content="text/css" href="chirp.css" />
+  <script src="json2.min.js"></script>
+  <script src="persist-min.js"></script>
+  <script src="riffwave.js"></script>
+  <script src="dancer.min.js"></script>
+  <script src="dancer.waveform.js"></script>
+  <script src="chirp.js"></script>
+</head>
+<body>
+<div id="header">
+  <div style="margin: auto; text-align: left; width: 950px;">
+    <img src="logo.png" id="logo" />
+    <div id="menu">
+      <div class="mitem"><a href="javascript:;" class="mlink" onclick="alert( 'piupiu v0.0.1\n(c) 2012, Michael Barchy\npiupiu@barchy.be' );">About</a></div>
+      <div class="mitem"><a href="https://github.com/michael79/piu-piu" class="mlink" target="_blank">GitHub</a></div> 
+      <div class="mitem"><a href="http://chirp.io" class="mlink" target="_blank">Chirp.io</a></div>
+      <div class="mitem"><a href="mailto:piupiu@barchy.be" class="mlink">Contact</a></div>    
+    </div>
+    <canvas id="waveform"></canvas>
+    <h1>pi&uacute;-pi&uacute;</h1>
+  </div>
+</div>
+<div id="main">
+<div id="tabs">
+  <div class="tab"><a href="javascript:;" class="tab_link" onclick="alert( 'Available soon...' );">Settings and Info</a></div>
+  <div class="tab"><a href="javascript:;" class="tab_link" onclick="toggle( 'list' ); toggle( 'create_chirp' );">Add something to chirp</a></div>
+  <div class="tab"><a href="javascript:;" class="tab_link" onclick="chirpDel();">Delete chirps</a></div>
+</div>
+<div id="list" style="display: block;">
+</div>
+<div id="create_chirp" style="display: none;">
+<h2>Add Something to Chirp</h2>
+<form onsubmit="return false;">
+<table width="100%" border="0" cellspacing="0" cellpadding="0">
+  <tr>
+    <td><select id="chirp_type" class="button" style="width: 100%;" onchange="chirpType();">
+      <option value="text/plain">Add a Note</option>
+      <option value="text/x-url">Add a Link</option>
+    </select></td>
+  </tr>
+  <tr>
+    <td id="chirp_edit"></td>
+  </tr>
+  <tr>
+    <td><input type="button" class="button" style="width: 45%;" onclick="toggle( 'create_chirp' ); toggle( 'list' );" value="Cancel" />
+    <input type="button" class="button" style="width: 45%; float: right;" onclick="chirpNew();" value="Done" /></td>
+  </tr>  
+</table>
+</form>
+</div>
+<div id="view_chirp" style="display: none;">
+<h2 id="chirp_title"></h2>
+<table width="100%" border="0" cellspacing="0" cellpadding="0">
+  <tr>
+    <td><div id="chirp_content"></div></td>
+  </tr>
+  <tr>
+    <td><div id="chirp_url"></div></td>
+  </tr>
+  <tr>
+    <td><input type="button" class="button" style="width: 45%;" onclick="currentChirp = ''; toggle( 'view_chirp' ); toggle( 'list' );" value="Close" />
+    <input type="button" class="button" style="width: 45%; float: right;" onclick="chirpPlay();" value="Chirp!" /></td>
+  </tr>  
+</table>
+</div>
+</div>
+</body>
+</html>
