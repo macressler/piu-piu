@@ -72,21 +72,15 @@ function chirpNew()
   var list = document.getElementById( 'chirp_type' );
   if( list.options.selectedIndex == -1 ) return;
   var t = list.options[ list.options.selectedIndex ].value;
+  var content = '';
   if( t == 'text/plain' )
   {
-    chirpOut( document.getElementById( 'content' ).value );
-    document.getElementById( 'content' ).value = '';
+    chirpOut( document.getElementById( 'content' ).value, t, function() {  document.getElementById( 'content' ).value = ''; toggle( 'create_chirp' ); setTimeout( function() { toggle( 'list' ); chirpList(); }, 500 ); } );
   }
   if( t == 'text/x-url' )
   {
-    chirpOut( document.getElementById( 'content' ).value, t );
-    document.getElementById( 'content' ).value = 'http://';
+    chirpOut( document.getElementById( 'content' ).value, t, function() {  document.getElementById( 'content' ).value = 'http://'; toggle( 'create_chirp' ); setTimeout( function() { toggle( 'list' ); chirpList(); }, 500 ); } );
   }
-  toggle( 'create_chirp' );
-  toggle( 'list' );   
-  setTimeout( 'chirpList();', 500 );
-  setTimeout( 'chirpList();', 1000 );
-  setTimeout( 'chirpList();', 2000 );
 }
 
 function chirpList()
@@ -96,6 +90,7 @@ function chirpList()
   for( var i in chirps )
   {
     var chirp = chirps[ i ];
+    if( typeof chirp.title == 'undefined' || chirp.title == null ) chirp.title = chirp.content;    
     html += '<div class="chirp" onclick="chirpView( \'' + i + '\' );">';
     html += '<input type="checkbox" id="sel_' + i + '" onclick="event.stopPropagation();" />'
     html += chirp.title;
@@ -132,8 +127,6 @@ function chirpDel()
     }
     store.set( 'chirps', JSON.stringify( chirps ) );
     setTimeout( 'chirpList();', 500 );
-    setTimeout( 'chirpList();', 1000 );
-    setTimeout( 'chirpList();', 2000 );    
   }
 }
 
@@ -143,6 +136,7 @@ function chirpView( id )
   if( typeof chirp == 'undefined' || chirp == null ) return;
   toggle( 'list' ); 
   toggle( 'view_chirp' );
+  if( typeof chirp.title == 'undefined' || chirp.title == null ) chirp.title = chirp.content;
   document.getElementById( 'chirp_title' ).innerHTML = chirp.title;
   document.getElementById( 'chirp_url' ).innerHTML = 'chirp.io/' + chirp.shortcode;
   if( chirp.mimetype == 'text/plain' ) document.getElementById( 'chirp_content' ).innerHTML = chirp.content.replace( /  /g, '&nbsp;&nbsp;' ).replace( /\n/g, '<br />' );
@@ -155,12 +149,16 @@ function chirpPlay()
   if( currentChirp == '' ) return;
   var chirp = chirps[ currentChirp ];
   if( typeof chirp == 'undefined' || chirp == null ) return;
-  var audio = new Audio(); 
-  audio.src = chirp.datauri;
-  var dancer = new Dancer();
-  dancer.waveform( document.getElementById( 'waveform' ), { strokeStyle: '#ffffff', strokeWidth: 2 } );
-  dancer.load( audio );
-  dancer.play();
+  var audio = new Audio();
+  store.get( 'datauri_' + currentChirp, function( ok, val ) {
+    if( ok ) {
+      audio.src = val;
+      var dancer = new Dancer();
+      dancer.waveform( document.getElementById( 'waveform' ), { strokeStyle: '#ffffff', strokeWidth: 2 } );
+      dancer.load( audio );
+      dancer.play();      
+    }
+  } );
 }
 
 function xhr( method, url, data, callback )
@@ -190,7 +188,7 @@ function xhr( method, url, data, callback )
   req.send( data );
 }
 
-function chirpOut( content, mime )
+function chirpOut( content, mime, callback )
 {
   var t = 'chirp';
   if( typeof mime == 'undefined' || mime == null ) mime = 'text/plain';
@@ -218,6 +216,27 @@ function chirpOut( content, mime )
   xhr( 'POST', 'chirp.php', data, function( r ) {
     if( r.readyState == 4 )
     {
+      var t = 'chirp'; // to be fixed
+      if( typeof mime == 'undefined' || mime == null ) mime = 'text/plain';
+      if( mime == 'text/plain' )
+      {
+        var parts = content.split( '\n' );
+        var t = parts[ 0 ].substring( 0, 47 );
+        if( parts[ 0 ].length > 47 ) t += '...';
+        if( content.length > 252 ) content = content.substring( 0, 252 ) + '...';
+      }
+      if( mime == 'text/x-url' )
+      {
+        var a = document.createElement( 'a' );
+        a.setAttribute( 'href', content );
+        t = new String( a.href );
+        t = t.replace( a.pathname, '' );
+        t = t.replace( 'http:', '' );
+        t = t.replace( 'https:', '' );
+        t = t.replace( '/', '' );
+        //t = t + ' ' + new String( a.pathname ).replace( /[^a-zA-Z0-9]/g, ' ' );
+        t = t.replace( '/', '' );
+      }      
       var json = r.responseText;
       console.log( 'Chirp response: ' + json );
       if( json == '' || json.substring( 0, 1 ) != '{' )
@@ -229,7 +248,8 @@ function chirpOut( content, mime )
       chirp.mimetype = mime;
       chirp.content = content;
       chirp.title = t;
-      if( chirp.is_new == 1 ) store.set( 'chirps', JSON.stringify( chirps ) ); 
+      chirps[ 'chirp_' + chirp.shortcode ] = chirp;
+      store.set( 'chirps', JSON.stringify( chirps ) );
       var code = 'hj' + chirp.longcode;
       var audio = new Audio(); 
       var wave = new RIFFWAVE(); 
@@ -244,7 +264,9 @@ function chirpOut( content, mime )
         var i = 0;
         while (i < samples) { 
           for( var nc = 0; nc < wave.header.numChannels; nc++ ) {
-            data[ j ] = 128 + Math.round( 127 * Math.cos( tones[ ids[ c ] ] * ( 2 * Math.PI ) * i / wave.header.sampleRate ) );
+            var t = i / wave.header.sampleRate;
+            data[ j ] = 128 + Math.round( 127 * Math.cos( tones[ ids[ c ] ] * ( 2 * Math.PI ) * t ) );
+            data[ j ] *= ( 1 - t );
             j++;
             i++;
           }
@@ -253,13 +275,12 @@ function chirpOut( content, mime )
       wave.Make( data );
       var dataURI = wave.dataURI;
       audio.src = dataURI;
-      chirp.datauri = dataURI;
-      chirps[ 'chirp_' + chirp.shortcode ] = chirp;      
-      if( chirp.is_new == 1 ) store.set( 'chirps', JSON.stringify( chirps ) );
+      if( chirp.is_new == 1 ) store.set( 'datauri_' + chirp.shortcode, dataURI );
       var dancer = new Dancer();
       dancer.waveform( document.getElementById( 'waveform' ), { strokeStyle: '#ffffff', strokeWidth: 2 } );
       dancer.load( audio );
       dancer.play();
+      setTimeout( callback, 1500 );
     }
   } );
 }
