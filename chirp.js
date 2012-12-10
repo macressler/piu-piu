@@ -149,9 +149,9 @@ function chirpPlay()
   if( currentChirp == '' ) return;
   var chirp = chirps[ currentChirp ];
   if( typeof chirp == 'undefined' || chirp == null ) return;
-  var audio = new Audio();
-  store.get( 'datauri_' + currentChirp, function( ok, val ) {
+  store.get( 'datauri_' + chirp.shortcode, function( ok, val ) {
     if( ok ) {
+      var audio = new Audio();  
       audio.src = val;
       var dancer = new Dancer();
       dancer.waveform( document.getElementById( 'waveform' ), { strokeStyle: '#ffffff', strokeWidth: 2 } );
