@@ -119,7 +119,7 @@ function chirpDel()
     alert( 'No chirp selected!' );
     return;
   }
-  if( confirm( 'Delete ' + count + ' chirps(s)?' ) )
+  if( confirm( 'Delete ' + count + ' chirp(s)?' ) )
   {
     for( var i in del )
     {
