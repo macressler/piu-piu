@@ -145,7 +145,7 @@ function chirpView( id )
   toggle( 'view_chirp' );
   document.getElementById( 'chirp_title' ).innerHTML = chirp.title;
   document.getElementById( 'chirp_url' ).innerHTML = 'chirp.io/' + chirp.shortcode;
-  if( chirp.mimetype == 'text/plain' ) document.getElementById( 'chirp_content' ).innerHTML = chirp.content.replace( /  /g, '&nbsp;&nbsp;' ).replace( /\r/g, '<br />' );
+  if( chirp.mimetype == 'text/plain' ) document.getElementById( 'chirp_content' ).innerHTML = chirp.content.replace( /  /g, '&nbsp;&nbsp;' ).replace( /\n/g, '<br />' );
   if( chirp.mimetype == 'text/x-url' ) document.getElementById( 'chirp_content' ).innerHTML = '<a href="' + chirp.content + '" target="_blank">' + chirp.content + '</a>';
   currentChirp = id;
 }
