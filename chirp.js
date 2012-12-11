@@ -156,12 +156,35 @@ function chirpPlay()
   if( typeof chirp == 'undefined' || chirp == null ) return;
   store.get( 'datauri_' + chirp.shortcode, function( ok, val ) {
     if( ok ) {
-      var audio = new Audio();  
-      audio.src = val;
-      var dancer = new Dancer();
-      dancer.waveform( document.getElementById( 'waveform' ), { strokeStyle: '#ffffff', strokeWidth: 2 } );
-      dancer.load( audio );
-      dancer.play();      
+      if( navigator.userAgent.match( /(iPad|iPhone|iPod)/i ) ) 
+      {
+        xhr( 'POST', 'audio_old.php', 'datauri=' + escape( val ), function( r ) {
+          if( r.readyState == 4 ) {
+            if( typeof document.getElementById( 'content_audio' ) == 'undefined' || document.getElementById( 'content_audio' ) == null ) document.getElementById( 'chirp_content' ).innerHTML += '<div id="content_audio"></div>';
+            setTimeout( function() {
+              var html = '';
+              html += '<br /><audio width="100%" height="30" controls="controls" src="audio_old.php?id=' + r.responseText + '"></audio>';
+              document.getElementById( 'content_audio' ).innerHTML = html;              
+            }, 500 );
+          }         
+        } );        
+      }
+        else
+      {
+        var audio = new Audio();       
+        audio.src = val;
+        try
+        {
+          var dancer = new Dancer();
+          dancer.waveform( document.getElementById( 'waveform' ), { strokeStyle: '#ffffff', strokeWidth: 2 } );
+          dancer.load( audio );
+          dancer.play();           
+        }
+          catch( e )
+        {
+          audio.play();
+        }
+      }
     }
   } );
 }
@@ -282,10 +305,17 @@ function chirpOut( content, mime, callback )
       {
         var audio = new Audio();       
         audio.src = dataURI;
-        var dancer = new Dancer();
-        dancer.waveform( document.getElementById( 'waveform' ), { strokeStyle: '#ffffff', strokeWidth: 2 } );
-        dancer.load( audio );
-        dancer.play();        
+        try
+        {
+          var dancer = new Dancer();
+          dancer.waveform( document.getElementById( 'waveform' ), { strokeStyle: '#ffffff', strokeWidth: 2 } );
+          dancer.load( audio );
+          dancer.play();           
+        }
+          catch( e )
+        {
+          audio.play();
+        }
       }
       catch( e )
       {
