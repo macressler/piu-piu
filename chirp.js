@@ -63,6 +63,33 @@ function toggle( id )
   }
 }
 
+function photoUpload()
+{
+  document.getElementById( 'done_button' ).innerHTML = '<div class="button" style="width: 100%;">Uploading...</div>';
+  var form = document.getElementById( 'chirp_form' );
+  form.action = 'upload.php';
+  form.target = 'upload_frame';
+  form.submit();
+}
+
+function chirpPhoto( frame )
+{
+  if( new String( frame.contentWindow.location ).indexOf( 'upload.php' ) != -1 )
+  {
+    var id = '';
+    if( typeof frame.contentWindow.document.getElementById( 'id' ) != 'undefined' && frame.contentWindow.document.getElementById( 'id' ) != null ) id = frame.contentWindow.document.getElementById( 'id' ).innerHTML;
+    if( id == '' )
+    {
+      alert( 'Could not upload, unsupported image format or file is too big.' );
+      toggle( 'create_chirp' );
+      setTimeout( function() { toggle( 'list' ); chirpList(); }, 500 );
+      return;
+    }
+    chirpOut( 'http://widgit.tk/piu-piu/i/' + id + '.jpg', 'image/jpeg', function() { toggle( 'create_chirp' ); setTimeout( function() { toggle( 'list' ); chirpList(); }, 500 ); } );
+    frame.src = 'blank.php'; 
+  }
+}
+
 function chirpType()
 {
   var list = document.getElementById( 'chirp_type' );
@@ -70,6 +97,46 @@ function chirpType()
   var t = list.options[ list.options.selectedIndex ].value;
   if( t == 'text/plain' ) document.getElementById( 'chirp_edit' ).innerHTML = '<textarea id="content" rows="5" style="width: 100%;"></textarea>';
   if( t == 'text/x-url' ) document.getElementById( 'chirp_edit' ).innerHTML = '<input id="content" style="width: 100%;" value="http://" />';
+  if( t == 'image/jpeg' )
+  {
+    document.getElementById( 'chirp_edit' ).innerHTML = '<input type="file" name="file" id="file" /><iframe src="blank.php" id="upload_frame" name="upload_frame" onload="chirpPhoto( this );"></iframe>';
+    setTimeout( function() {
+      document.getElementById( 'done_button' ).innerHTML = '<div class="button" style="width: 100%;" onclick="photoUpload();">Done</div>';
+      if( navigator.userAgent.match( /(iPad|iPhone|iPod)/i ) ) {
+        Picup2.convertFileInput( document.getElementById( 'file' ), { 'ismultiselectforbidden': escape( 'true' ), 'mediatypesallowed': escape( 'image' ), 'posturl': escape( 'http://widgit.tk/piu-piu/upload.php' ), 'returnserverresponse': escape( 'true' ), 'callbackurl': escape( 'http://widgit.tk/piu-piu/' ), 'referrername' : escape( 'piu-piu' ),  'purpose': escape( 'Upload Photo to piu-piu to chirp it' ),  } );      
+        Picup2.callbackHandler = function( data ) {
+          for( var key in data ) {
+            console.log( key + " = " + data[ key ] );
+            if( unescape( key ) == 'file[0][serverResponse]' )
+            {
+              var html = unescape( data[ key ] );
+              var id = '';
+              if( html.indexOf( '<div id="id">' ) != 1 )
+              {
+                id = html.substring( html.indexOf( '<div id="id">' ) + 13 );
+                if( id.indexOf( '</div>' ) != -1 )
+                {
+                  id = id.substring( 0, id.indexOf( '</div>' ) ); 
+                }
+                  else
+                {
+                  id = '';
+                }
+              }
+              if( id == '' )
+              {
+                alert( 'Could not upload, unsupported image format or file is too big.' );
+                toggle( 'create_chirp' );
+                setTimeout( function() { toggle( 'list' ); chirpList(); }, 500 );
+                return;
+              }
+              chirpOut( 'http://widgit.tk/piu-piu/i/' + id + '.jpg', 'image/jpeg', function() { toggle( 'create_chirp' ); setTimeout( function() { toggle( 'list' ); chirpList(); }, 500 ); } );
+            }
+          }
+        }        
+      }
+    }, 1000 );
+  }
 }
 
 function chirpNew()
@@ -145,8 +212,28 @@ function chirpView( id )
   document.getElementById( 'chirp_title' ).innerHTML = chirp.title;
   document.getElementById( 'chirp_url' ).innerHTML = 'chirp.io/' + chirp.shortcode;
   if( chirp.mimetype == 'text/plain' ) document.getElementById( 'chirp_content' ).innerHTML = chirp.content.replace( /  /g, '&nbsp;&nbsp;' ).replace( /\n/g, '<br />' );
-  if( chirp.mimetype == 'text/x-url' ) document.getElementById( 'chirp_content' ).innerHTML = '<a href="' + chirp.content + '" target="_blank">' + chirp.content + '</a>';
+  if( chirp.mimetype == 'text/x-url' ) document.getElementById( 'chirp_content' ).innerHTML = '<a style="color: blue;" href="' + chirp.content + '" target="_blank">' + chirp.content + '</a>';
+  if( chirp.mimetype == 'image/jpeg' ) document.getElementById( 'chirp_content' ).innerHTML = '<img src="' + chirp.content + '" width="100%" />';
   currentChirp = id;
+  if( navigator.userAgent.match( /(iPad|iPhone|iPod|Android)/i ) ) 
+  {
+    document.getElementById( 'play_button' ).innerHTML = '<div class="button" style="width: 100%;">Loading...</div>';
+    store.get( 'datauri_' + chirp.shortcode, function( ok, val ) {
+      if( ok ) {
+        xhr( 'POST', 'audio_old.php', 'datauri=' + escape( val ), function( r ) {
+          if( r.readyState == 4 ) {
+            console.log( 'Old sound id: ' + r.responseText );
+            setTimeout( function() {
+              var html = '';
+              html += '<div type="button" class="button" style="width: 100%;" onclick="var audio = document.getElementById( \'audio_old\' ); audio.load(); audio.play();">Chirp!</div>';
+              html += '<audio id="audio_old" src="tmp/' + r.responseText + '.wav" controls="controls"></audio>';
+              document.getElementById( 'play_button' ).innerHTML = html;
+            }, 500 );
+          }         
+        } );        
+      }
+    } );
+  }
 }
 
 function chirpPlay()
@@ -156,20 +243,7 @@ function chirpPlay()
   if( typeof chirp == 'undefined' || chirp == null ) return;
   store.get( 'datauri_' + chirp.shortcode, function( ok, val ) {
     if( ok ) {
-      if( navigator.userAgent.match( /(iPad|iPhone|iPod)/i ) ) 
-      {
-        xhr( 'POST', 'audio_old.php', 'datauri=' + escape( val ), function( r ) {
-          if( r.readyState == 4 ) {
-            if( typeof document.getElementById( 'content_audio' ) == 'undefined' || document.getElementById( 'content_audio' ) == null ) document.getElementById( 'chirp_content' ).innerHTML += '<div id="content_audio"></div>';
-            setTimeout( function() {
-              var html = '';
-              html += '<br /><audio width="100%" height="30" controls="controls" src="audio_old.php?id=' + r.responseText + '"></audio>';
-              document.getElementById( 'content_audio' ).innerHTML = html;              
-            }, 500 );
-          }         
-        } );        
-      }
-        else
+      try
       {
         var audio = new Audio();       
         audio.src = val;
@@ -180,10 +254,23 @@ function chirpPlay()
           dancer.load( audio );
           dancer.play();           
         }
-          catch( e )
+          catch( e2 )
         {
           audio.play();
-        }
+        }          
+      }
+        catch( e )
+      {
+        xhr( 'POST', 'audio_old.php', 'datauri=' + escape( val ), function( r ) {
+          if( r.readyState == 4 ) {
+            setTimeout( function() {
+              // flash fallback
+              var so = new SWFObject( 'WAVPlayerProject.swf', 'WAVPlayerProject', '425', '32', '9', '#000000' );
+              so.addVariable( 'sound_url', 'tmp/' + r.responseText + '.wav' );
+              so.write( 'waveform_container' );
+            }, 500 );
+          }         
+        } );          
       }
     }
   } );
@@ -220,12 +307,14 @@ function chirpOut( content, mime, callback )
 {
   var t = 'chirp';
   if( typeof mime == 'undefined' || mime == null ) mime = 'text/plain';
+  var data = {};
   if( mime == 'text/plain' )
   {
     var parts = content.split( '\n' );
     var t = parts[ 0 ].substring( 0, 47 );
     if( parts[ 0 ].length > 47 ) t += '...';
     if( content.length > 252 ) content = content.substring( 0, 252 ) + '...';
+    data = { mimetype: mime, body: content, title: t };  
   }
   if( mime == 'text/x-url' )
   {
@@ -238,8 +327,13 @@ function chirpOut( content, mime, callback )
     t = t.replace( '/', '' );
     //t = t + ' ' + new String( a.pathname ).replace( /[^a-zA-Z0-9]/g, ' ' );
     t = t.replace( '/', '' );
+    data = { mimetype: mime, url: content, title: t };
   }
-  var data = { mimetype: mime, body: content, title: t };
+  if( mime == 'image/jpeg' )
+  {
+    t = 'Photo';
+    data = { mimetype: mime, url: content, title: t };
+  }
   console.log( 'Chirp request: ' + JSON.stringify( data ) );
   xhr( 'POST', 'chirp.php', data, function( r ) {
     if( r.readyState == 4 )
@@ -264,7 +358,11 @@ function chirpOut( content, mime, callback )
         t = t.replace( '/', '' );
         //t = t + ' ' + new String( a.pathname ).replace( /[^a-zA-Z0-9]/g, ' ' );
         t = t.replace( '/', '' );
-      }      
+      }
+      if( mime == 'image/jpeg' )
+      {
+        t = 'Photo';
+      }
       var json = r.responseText;
       console.log( 'Chirp response: ' + json );
       if( json == '' || json.substring( 0, 1 ) != '{' )
@@ -283,7 +381,7 @@ function chirpOut( content, mime, callback )
       var data = [];
       wave.header.sampleRate = 44100; 
       wave.header.numChannels = 1; 
-      var samples = parseInt( ( wave.header.sampleRate / 1000 ) * 87.2 );
+      var samples = parseInt( ( wave.header.sampleRate / 1000 ) * 87.2 ) * wave.header.numChannels;
       var j = 0;
       for( var n = 0; n < code.length; n++ )
       {
@@ -322,14 +420,15 @@ function chirpOut( content, mime, callback )
         console.log( e );
         xhr( 'POST', 'audio_old.php', 'datauri=' + escape( dataURI ), function( r ) {
           if( r.readyState == 4 ) {
-            var html = '';
-            html += '<embed autoplay="true" src="audio_old.php?id=' + r.responseText + '"></embed>';
-            document.getElementById( 'audio_old' ).innerHTML = html;
+            var so = new SWFObject( 'WAVPlayerProject.swf', 'WAVPlayerProject', '425', '32', '9', '#000000' );
+            so.addVariable( 'sound_url', 'tmp/' + r.responseText + '.wav' );
+            so.write( 'waveform_container' );
           }         
         } );
       }
       if( chirp.is_new == 1 ) store.set( 'datauri_' + chirp.shortcode, dataURI );
       setTimeout( callback, 1500 );
+      if( navigator.userAgent.match( /(iPad|iPhone|iPod|Android)/i ) ) setTimeout( function() { currentChirp = 'chirp_' + chirp.shortcode; chirpView(); }, 2000 );
     }
   } );
 }

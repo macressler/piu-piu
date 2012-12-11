@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html>
+<html manifest="cache.php">
 <head>
   <title>pi&uacute;-pi&uacute;</title>
   <link rel="icon" type="image/png" href="logo.png" />
@@ -10,6 +10,8 @@
   <script src="riffwave.js"></script>
   <script src="dancer.min.js"></script>
   <script src="dancer.waveform.js"></script>
+  <script src="swfobject.js"></script>
+  <script src="picup.2.1.1.js"></script>  
   <script src="chirp.js"></script>
 </head>
 <body>
@@ -22,7 +24,7 @@
       <div class="mitem"><a href="http://chirp.io" class="mlink" target="_blank">Chirp.io</a></div>
       <div class="mitem"><a href="mailto:piupiu@barchy.be" class="mlink">Contact</a></div>    
     </div>
-    <canvas id="waveform"></canvas>
+    <div id="waveform_container"><canvas id="waveform"></canvas></div>
     <h1>pi&uacute;-pi&uacute;</h1>
   </div>
 </div>
@@ -36,20 +38,23 @@
 </div>
 <div id="create_chirp" style="display: none;">
 <h2>Add Something to Chirp</h2>
-<form onsubmit="return false;">
+<form id="chirp_form" onsubmit="return false;" method="post" enctype="multipart/form-data">
 <table width="100%" border="0" cellspacing="0" cellpadding="0">
   <tr>
     <td><select id="chirp_type" class="button" style="width: 100%;" onchange="chirpType();">
       <option value="text/plain">Add a Note</option>
-      <option value="text/x-url">Add a Link (not fully working)</option>
+      <option value="text/x-url">Add a Link</option>
+      <option value="image/jpeg">Add a Picture</option>
     </select></td>
   </tr>
   <tr>
     <td id="chirp_edit"></td>
   </tr>
   <tr>
-    <td><input type="button" class="button" style="width: 45%;" onclick="toggle( 'create_chirp' ); toggle( 'list' );" value="Cancel" />
-    <input type="button" class="button" style="width: 45%; float: right;" onclick="chirpNew();" value="Done" /></td>
+    <td>
+      <div id="done_button"><div class="button" style="width: 100%;" onclick="chirpNew();">Done</div></div>
+      <div class="button" style="width: 45%;" onclick="toggle( 'create_chirp' ); toggle( 'list' );">Cancel</div>
+    </td>
   </tr>  
 </table>
 </form>
@@ -64,12 +69,13 @@
     <td><div id="chirp_url"></div></td>
   </tr>
   <tr>
-    <td><input type="button" class="button" style="width: 45%;" onclick="currentChirp = ''; toggle( 'view_chirp' ); toggle( 'list' );" value="Close" />
-    <input type="button" class="button" style="width: 45%; float: right;" onclick="chirpPlay();" value="Chirp!" /></td>
+    <td>
+      <div id="play_button"><div class="button" style="width: 100%;" onclick="chirpPlay();">Chirp!</div></div>
+      <div class="button" style="width: 45%;" onclick="currentChirp = ''; toggle( 'view_chirp' ); toggle( 'list' );">Close</div>
+    </td>
   </tr>  
 </table>
 </div>
-<div id="audio_old" style="display: none;"></div>
 </div>
 </body>
 </html>
