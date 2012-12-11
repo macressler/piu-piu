@@ -3,6 +3,7 @@
 <head>
   <title>pi&uacute;-pi&uacute;</title>
   <link rel="icon" type="image/png" href="logo.png" />
+  <link rel="shortcut icon" href="favicon.ico" />
   <link rel="apple-touch-icon" href="logo.png">
   <link rel="stylesheet" content="text/css" href="chirp.css" />
   <script src="json2.min.js"></script>
@@ -19,7 +20,7 @@
   <div style="margin: auto; text-align: left; width: 950px;">
     <img src="logo.png" id="logo" />
     <div id="menu">
-      <div class="mitem"><a href="javascript:;" class="mlink" onclick="alert( 'piupiu v0.0.1\n(c) 2012, Michael Barchy\npiupiu@barchy.be' );">About</a></div>
+      <div class="mitem"><a href="javascript:;" class="mlink" onclick="alert( 'piu-piu v0.0.3\n(c) 2012, Michael Barchy\npiupiu@barchy.be' );">About</a></div>
       <div class="mitem"><a href="https://github.com/michael79/piu-piu" class="mlink" target="_blank">GitHub</a></div> 
       <div class="mitem"><a href="http://chirp.io" class="mlink" target="_blank">Chirp.io</a></div>
       <div class="mitem"><a href="mailto:piupiu@barchy.be" class="mlink">Contact</a></div>    
@@ -30,11 +31,12 @@
 </div>
 <div id="main">
 <div id="tabs">
-  <div class="tab"><a href="javascript:;" class="tab_link" onclick="alert( 'Available soon...' );">Settings and Info</a></div>
+  <div class="tab"><a href="javascript:;" class="tab_link" onclick="alert( 'No settings at the moment.\n\nMore info at http://chirp.io' );">Settings and Info</a></div>
   <div class="tab"><a href="javascript:;" class="tab_link" onclick="toggle( 'list' ); toggle( 'create_chirp' );">Add something to Chirp</a></div>
   <div class="tab"><a href="javascript:;" class="tab_link" onclick="chirpDel();">Delete Chirps</a></div>
 </div>
 <div id="list" style="display: block;">
+  <p align="center"><img src="loading.gif" align="absmiddle" style="margin-right: 15px;" />Loading...</p>
 </div>
 <div id="create_chirp" style="display: none;">
 <h2>Add Something to Chirp</h2>

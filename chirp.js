@@ -6,6 +6,7 @@ var tones = [];
 var ids = [];
 
 var currentChirp = '';
+var chirpDataURI = '';
 
 if( typeof console == 'undefined' || console == null )
 {
@@ -46,8 +47,10 @@ function init()
     sfreq *= stone;
   }
   
-  chirpList();
-  chirpType( document.getElementById( 'chirp_type' ) );
+  setTimeout( function() {
+    chirpList();
+    chirpType( document.getElementById( 'chirp_type' ) );
+  }, 500 );
 }
 
 function toggle( id )
@@ -76,6 +79,7 @@ function chirpPhoto( frame )
 {
   if( new String( frame.contentWindow.location ).indexOf( 'upload.php' ) != -1 )
   {
+    console.log( 'Upload response: ' + frame.contentWindow.document.body.innerHTML );
     var id = '';
     if( typeof frame.contentWindow.document.getElementById( 'id' ) != 'undefined' && frame.contentWindow.document.getElementById( 'id' ) != null ) id = frame.contentWindow.document.getElementById( 'id' ).innerHTML;
     if( id == '' )
@@ -85,7 +89,9 @@ function chirpPhoto( frame )
       setTimeout( function() { toggle( 'list' ); chirpList(); }, 500 );
       return;
     }
-    chirpOut( 'http://widgit.tk/piu-piu/i/' + id + '.jpg', 'image/jpeg', function() { toggle( 'create_chirp' ); setTimeout( function() { toggle( 'list' ); chirpList(); }, 500 ); } );
+    chirpDataURI = '';
+    if( typeof frame.contentWindow.document.getElementById( 'datauri' ) != 'undefined' && frame.contentWindow.document.getElementById( 'datauri' ) != null ) chirpDataURI = unescape( frame.contentWindow.document.getElementById( 'datauri' ).innerHTML );    
+    chirpOut( 'http://widgit.tk/piu-piu/i/' + id + '.jpg', 'image/jpeg', function() { toggle( 'create_chirp' ); setTimeout( function() { if( chirpDataURI != '' ) { store.set( 'thumb_' + currentChirp, chirpDataURI ); chirpDataURI = ''; } toggle( 'list' ); chirpList(); }, 500 ); } );
     frame.src = 'blank.php'; 
   }
 }
@@ -99,18 +105,32 @@ function chirpType()
   if( t == 'text/x-url' ) document.getElementById( 'chirp_edit' ).innerHTML = '<input id="content" style="width: 100%;" value="http://" />';
   if( t == 'image/jpeg' )
   {
-    document.getElementById( 'chirp_edit' ).innerHTML = '<input type="file" name="file" id="file" /><iframe src="blank.php" id="upload_frame" name="upload_frame" onload="chirpPhoto( this );"></iframe>';
+    document.getElementById( 'chirp_edit' ).innerHTML = '<div class="input"><input type="file" name="file" id="file" /><iframe src="blank.php" id="upload_frame" name="upload_frame" onload="chirpPhoto( this );"></iframe>';
+    if( navigator.userAgent.match( /(iPad|iPhone|iPod)/i ) )  document.getElementById( 'chirp_edit' ).innerHTML += '<span id="loading"><img src="loading.gif" align="absmiddle" style="margin-right: 15px;" />Loading...</span>';
+    document.getElementById( 'chirp_edit' ).innerHTML += '</div>';
     setTimeout( function() {
       document.getElementById( 'done_button' ).innerHTML = '<div class="button" style="width: 100%;" onclick="photoUpload();">Done</div>';
       if( navigator.userAgent.match( /(iPad|iPhone|iPod)/i ) ) {
-        Picup2.convertFileInput( document.getElementById( 'file' ), { 'ismultiselectforbidden': escape( 'true' ), 'mediatypesallowed': escape( 'image' ), 'posturl': escape( 'http://widgit.tk/piu-piu/upload.php' ), 'returnserverresponse': escape( 'true' ), 'callbackurl': escape( 'http://widgit.tk/piu-piu/' ), 'referrername' : escape( 'piu-piu' ),  'purpose': escape( 'Upload Photo to piu-piu to chirp it' ),  } );      
+        Picup2.convertFileInput( document.getElementById( 'file' ), {
+          'ismultiselectforbidden': escape( 'true' ),
+          'mediatypesallowed': escape( 'image' ),
+          'posturl': escape( 'http://widgit.tk/piu-piu/upload.php' ),
+          'returnserverresponse': escape( 'true' ),
+          'callbackurl': escape( 'http://widgit.tk/piu-piu/' ),
+          'referrername' : escape( 'piu-piu' ),
+          'referrerfavicon' : escape( 'http://widgit.tk/piu-piu/favicon.ico' ),
+          'purpose': escape( 'Upload Photo to piu-piu to chirp it' ),
+          'returnthumbnaildataurl': escape( 'true' ),
+        } );
+        document.getElementById( 'loading' ).innerHTML = '';
         Picup2.callbackHandler = function( data ) {
+          var id = '';
+          chirpDataURI = '';
           for( var key in data ) {
             console.log( key + " = " + data[ key ] );
             if( unescape( key ) == 'file[0][serverResponse]' )
             {
               var html = unescape( data[ key ] );
-              var id = '';
               if( html.indexOf( '<div id="id">' ) != 1 )
               {
                 id = html.substring( html.indexOf( '<div id="id">' ) + 13 );
@@ -123,16 +143,18 @@ function chirpType()
                   id = '';
                 }
               }
-              if( id == '' )
-              {
-                alert( 'Could not upload, unsupported image format or file is too big.' );
-                toggle( 'create_chirp' );
-                setTimeout( function() { toggle( 'list' ); chirpList(); }, 500 );
-                return;
-              }
-              chirpOut( 'http://widgit.tk/piu-piu/i/' + id + '.jpg', 'image/jpeg', function() { toggle( 'create_chirp' ); setTimeout( function() { toggle( 'list' ); chirpList(); }, 500 ); } );
             }
+            if( unescape( key ) == 'file[0][thumbnailDataURL]' ) chirpDataURI = unescape( data[ key ] );
           }
+          if( id == '' )
+          {
+            alert( 'Could not upload, unsupported image format or file is too big.' );
+            toggle( 'create_chirp' );
+            setTimeout( function() { toggle( 'list' ); chirpList(); }, 500 );
+            return;
+          }
+          window.location = '#';
+          chirpOut( 'http://widgit.tk/piu-piu/i/' + id + '.jpg', 'image/jpeg', function() { toggle( 'create_chirp' ); setTimeout( function() { if( chirpDataURI != '' ) { store.set( 'thumb_' + currentChirp, chirpDataURI ); chirpDataURI = ''; } toggle( 'list' ); chirpList(); }, 500 ); } );
         }        
       }
     }, 1000 );
@@ -161,16 +183,36 @@ function chirpList()
   var count = 0;
   for( var i in chirps )
   {
+    var now = new Date().getTime();
     var chirp = chirps[ i ];
-    if( typeof chirp.title == 'undefined' || chirp.title == null ) chirp.title = chirp.content;    
-    html += '<div class="chirp" onclick="chirpView( \'' + i + '\' );">';
-    html += '<input type="checkbox" id="sel_' + i + '" onclick="try { event.stopPropagation(); } catch( e ) { event.cancelBubble = true; }" />'
-    html += chirp.title;
+    if( typeof chirp.title == 'undefined' || chirp.title == null || chirp.title == '' ) chirp.title = chirp.content;
+    if( typeof chirp.date == 'undefined' || chirp.date == null || chirp.title == '' ) chirp.date = now;
+    var d = new Date();
+    d.setTime( chirp.date );
+    var d_txt = d;
+    if( d.getTime() == now ) d_txt = 'Unknow date-time';
+    var ico = 'ico_' + chirp.mimetype.replace( '/', '_' ) + '.png';
+    html += '<div class="chirp" onclick="chirpView( \'' + i + '\' );" style="height: 32px;">';
+    html += '<div style="float: left; width: 32px; height: 32px;"><input style="width: 24px; height: 24px;" type="checkbox" id="sel_' + i + '" onclick="try { event.stopPropagation(); } catch( e ) { event.cancelBubble = true; }" /></div>'
+    html += '<div style="float: left; width: 32px; height: 32px;"><img id="ico_' + i + '" src="' + ico + '" width="32" height="32"" /></div>';
+    html += '<div style="float: left; margin-left: 15px;">';
+    html += '<b style="text-shadow: 1px 1px 1px white;">' + chirp.title + '</b><br />';
+    html += '<font style="font-size: 10pt; color: #999999; font-weight: normal;">' + d_txt + '</font>';
+    html += '</div>';
     html += '</div>';
     count++;
   }
   if( count == 0 ) html += '<div class="chirp">You have no chirp. To begin, click "Add something to Chirp" button above.</div>';
   document.getElementById( 'list' ).innerHTML = html;
+  setTimeout( function() {
+    for( var i in chirps )
+    {
+      var ico = document.getElementById( 'ico_' + i );
+      store.get( 'thumb_' + i, function( ok, val ) {
+        if( ok ) ico.src = val;
+      } );
+    }
+  }, 500 );
 }
 
 function chirpDel()
@@ -191,7 +233,7 @@ function chirpDel()
     alert( 'No chirp selected!' );
     return;
   }
-  if( confirm( 'Delete ' + count + ' chirp(s)?' ) )
+  if( confirm( 'Delete ' + count + ' chirp' + ( ( count > 1 ) ? 's' : '' ) + '?\n\nThis can\'t be canceled after confirmation.' ) )
   {
     for( var i in del )
     {
@@ -213,7 +255,13 @@ function chirpView( id )
   document.getElementById( 'chirp_url' ).innerHTML = 'chirp.io/' + chirp.shortcode;
   if( chirp.mimetype == 'text/plain' ) document.getElementById( 'chirp_content' ).innerHTML = chirp.content.replace( /  /g, '&nbsp;&nbsp;' ).replace( /\n/g, '<br />' );
   if( chirp.mimetype == 'text/x-url' ) document.getElementById( 'chirp_content' ).innerHTML = '<a style="color: blue;" href="' + chirp.content + '" target="_blank">' + chirp.content + '</a>';
-  if( chirp.mimetype == 'image/jpeg' ) document.getElementById( 'chirp_content' ).innerHTML = '<img src="' + chirp.content + '" width="100%" />';
+  if( chirp.mimetype == 'image/jpeg' )
+  {
+    document.getElementById( 'chirp_content' ).innerHTML = '<img id="content_image" src="' + chirp.content + '" width="100%" />';
+    setTimeout( function() {
+      document.getElementById( 'content_image' ).onerror = function() { document.getElementById( 'content_image' ).src = 'err.png'; }
+    }, 500 );
+  }
   currentChirp = id;
   if( navigator.userAgent.match( /(iPad|iPhone|iPod|Android)/i ) ) 
   {
@@ -374,7 +422,9 @@ function chirpOut( content, mime, callback )
       chirp.mimetype = mime;
       chirp.content = content;
       chirp.title = t;
-      chirps[ 'chirp_' + chirp.shortcode ] = chirp;
+      chirp.date = new Date().getTime();
+      currentChirp = 'chirp_' + chirp.shortcode;
+      chirps[ currentChirp ] = chirp;
       store.set( 'chirps', JSON.stringify( chirps ) );
       var code = 'hj' + chirp.longcode;
       var wave = new RIFFWAVE(); 
@@ -428,7 +478,7 @@ function chirpOut( content, mime, callback )
       }
       if( chirp.is_new == 1 ) store.set( 'datauri_' + chirp.shortcode, dataURI );
       setTimeout( callback, 1500 );
-      if( navigator.userAgent.match( /(iPad|iPhone|iPod|Android)/i ) ) setTimeout( function() { currentChirp = 'chirp_' + chirp.shortcode; chirpView(); }, 2000 );
+      if( navigator.userAgent.match( /(iPad|iPhone|iPod|Android)/i ) ) setTimeout( function() { chirpView(); }, 2000 );
     }
   } );
 }
