@@ -101,8 +101,16 @@ function chirpType()
   var list = document.getElementById( 'chirp_type' );
   if( list.options.selectedIndex == -1 ) return;
   var t = list.options[ list.options.selectedIndex ].value;
-  if( t == 'text/plain' ) document.getElementById( 'chirp_edit' ).innerHTML = '<textarea id="content" rows="5" style="width: 100%;"></textarea>';
-  if( t == 'text/x-url' ) document.getElementById( 'chirp_edit' ).innerHTML = '<input id="content" style="width: 100%;" value="http://" />';
+  if( t == 'text/plain' )
+  {
+    document.getElementById( 'done_button' ).innerHTML = '<div class="button" style="width: 100%;" onclick="chirpNew();">Done</div>';
+    document.getElementById( 'chirp_edit' ).innerHTML = '<textarea id="content" rows="5" style="width: 100%;"></textarea>';
+  }
+  if( t == 'text/x-url' )
+  {
+    document.getElementById( 'done_button' ).innerHTML = '<div class="button" style="width: 100%;" onclick="chirpNew();">Done</div>';
+    document.getElementById( 'chirp_edit' ).innerHTML = '<input id="content" style="width: 100%;" value="http://" />';
+  }
   if( t == 'image/jpeg' )
   {
     document.getElementById( 'chirp_edit' ).innerHTML = '<div class="input"><input type="file" name="file" id="file" /><iframe src="blank.php" id="upload_frame" name="upload_frame" onload="chirpPhoto( this );"></iframe>';
@@ -208,8 +216,12 @@ function chirpList()
     for( var i in chirps )
     {
       var ico = document.getElementById( 'ico_' + i );
+      ico.style.border = 'none 1px'
       store.get( 'thumb_' + i, function( ok, val ) {
-        if( ok ) ico.src = val;
+        if( ok ) {
+          ico.src = val;
+          ico.className = 'ico';
+        }
       } );
     }
   }, 500 );
