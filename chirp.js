@@ -1,3 +1,8 @@
+if( navigator.userAgent.match( /(iPhone|iPod|Android)/i ) ) {
+  document.write( '<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no" />' );
+  document.write( '<link rel="stylesheet" content="text/css" href="mobile.css" />' );
+}
+
 var store = {};
 var chirps = {};
 
@@ -66,6 +71,33 @@ function toggle( id )
   }
 }
 
+function xhr( method, url, data, callback )
+{
+  var req = null;
+  if( window.XMLHttpRequest ) req = new XMLHttpRequest();
+  if( window.ActiveXObject )
+  {
+    var names =
+    [
+      'Msxml2.XMLHTTP.6.0',
+      'Msxml2.XMLHTTP.3.0',
+      'Msxml2.XMLHTTP',
+      'Microsoft.XMLHTTP'
+    ];
+    for( var i in names )
+    {
+      try{ req = new ActiveXObject( names[ i ] ); }
+      catch( e ){}
+    }
+  }
+  if( req == null ) return;
+  req.open( method, url ,true );
+  if( method == 'POST' ) req.setRequestHeader( 'Content-type', 'application/x-www-form-urlencoded' );
+  if( typeof data == 'object' ) data = 'json=' + escape( JSON.stringify( data ) );
+  req.onreadystatechange = function() { callback( req ); }  
+  req.send( data );
+}
+
 function photoUpload()
 {
   document.getElementById( 'done_button' ).innerHTML = '<div class="button" style="width: 100%;">Uploading...</div>';
@@ -128,7 +160,7 @@ function chirpType()
           'referrername' : escape( 'piu-piu' ),
           'referrerfavicon' : escape( 'http://widgit.tk/piu-piu/favicon.ico' ),
           'purpose': escape( 'Upload Photo to piu-piu to chirp it' ),
-          'returnthumbnaildataurl': escape( 'true' ),
+          'returnthumbnaildataurl': escape( 'true' )
         } );
         document.getElementById( 'loading' ).innerHTML = '';
         Picup2.callbackHandler = function( data ) {
@@ -205,12 +237,12 @@ function chirpList()
     html += '<div style="float: left; width: 32px; height: 32px;"><img id="ico_' + i + '" src="' + ico + '" width="32" height="32"" /></div>';
     html += '<div style="float: left; margin-left: 15px;">';
     html += '<b style="text-shadow: 1px 1px 1px white;">' + chirp.title + '</b><br />';
-    html += '<font style="font-size: 10pt; color: #999999; font-weight: normal;">' + d_txt + '</font>';
+    html += '<font class="chirp_date">' + d_txt + '</font>';
     html += '</div>';
     html += '</div>';
     count++;
   }
-  if( count == 0 ) html += '<div class="chirp">You have no chirp. To begin, click "Add something to Chirp" button above.</div>';
+  if( count == 0 ) html += '<div class="chirp" style="padding-top: 0px; padding-bottom: 30px;"><p align="center" style="font-weight: normal;">You have no chirp. To begin, click "Add something to Chirp" button.</p></div>';
   document.getElementById( 'list' ).innerHTML = html;
   setTimeout( function() {
     for( var i in chirps )
@@ -218,7 +250,7 @@ function chirpList()
       var ico = document.getElementById( 'ico_' + i );
       ico.style.border = 'none 1px'
       store.get( 'thumb_' + i, function( ok, val ) {
-        if( ok ) {
+        if( ok && val != null && val != '' ) {
           ico.src = val;
           ico.className = 'ico';
         }
@@ -271,7 +303,7 @@ function chirpView( id )
   {
     document.getElementById( 'chirp_content' ).innerHTML = '<img id="content_image" src="' + chirp.content + '" width="100%" />';
     setTimeout( function() {
-      document.getElementById( 'content_image' ).onerror = function() { document.getElementById( 'content_image' ).src = 'err.png'; }
+      document.getElementById( 'content_image' ).onerror = function() { setTimeout( function() { document.getElementById( 'content_image' ).src = 'err.png'; }, 500 ); }
     }, 500 );
   }
   currentChirp = id;
@@ -285,7 +317,7 @@ function chirpView( id )
             console.log( 'Old sound id: ' + r.responseText );
             setTimeout( function() {
               var html = '';
-              html += '<div type="button" class="button" style="width: 100%;" onclick="var audio = document.getElementById( \'audio_old\' ); audio.load(); audio.play();">Chirp!</div>';
+              html += '<div type="button" class="button" style="width: 100%;" onclick="oldPlay();">Chirp!</div>';
               html += '<audio id="audio_old" src="tmp/' + r.responseText + '.wav" controls="controls"></audio>';
               document.getElementById( 'play_button' ).innerHTML = html;
             }, 500 );
@@ -294,6 +326,15 @@ function chirpView( id )
       }
     } );
   }
+}
+
+function oldPlay()
+{
+  var audio = document.getElementById( 'audio_old' );
+  document.getElementById( 'waveform_container' ).innerHTML = '<img src="wave.gif" width="100%" height="100%" />';  
+  audio.load();
+  audio.play();
+  setTimeout( function() { document.getElementById( 'waveform_container' ).innerHTML = ''; }, 5000 );
 }
 
 function chirpPlay()
@@ -336,36 +377,10 @@ function chirpPlay()
   } );
 }
 
-function xhr( method, url, data, callback )
-{
-  var req = null;
-  if( window.XMLHttpRequest ) req = new XMLHttpRequest();
-  if( window.ActiveXObject )
-  {
-    var names =
-    [
-      'Msxml2.XMLHTTP.6.0',
-      'Msxml2.XMLHTTP.3.0',
-      'Msxml2.XMLHTTP',
-      'Microsoft.XMLHTTP'
-    ];
-    for( var i in names )
-    {
-      try{ req = new ActiveXObject( names[ i ] ); }
-      catch( e ){}
-    }
-  }
-  if( req == null ) return;
-  req.open( method, url ,true );
-  if( method == 'POST' ) req.setRequestHeader( 'Content-type', 'application/x-www-form-urlencoded' );
-  if( typeof data == 'object' ) data = 'json=' + escape( JSON.stringify( data ) );
-  req.onreadystatechange = function() { callback( req ); }  
-  req.send( data );
-}
+var chirpTitle = '';
 
 function chirpOut( content, mime, callback )
 {
-  var t = 'chirp';
   if( typeof mime == 'undefined' || mime == null ) mime = 'text/plain';
   var data = {};
   if( mime == 'text/plain' )
@@ -394,35 +409,11 @@ function chirpOut( content, mime, callback )
     t = 'Photo';
     data = { mimetype: mime, url: content, title: t };
   }
+  chirpTitle = t;
   console.log( 'Chirp request: ' + JSON.stringify( data ) );
   xhr( 'POST', 'chirp.php', data, function( r ) {
     if( r.readyState == 4 )
     {
-      var t = 'chirp'; // to be fixed
-      if( typeof mime == 'undefined' || mime == null ) mime = 'text/plain';
-      if( mime == 'text/plain' )
-      {
-        var parts = content.split( '\n' );
-        var t = parts[ 0 ].substring( 0, 47 );
-        if( parts[ 0 ].length > 47 ) t += '...';
-        if( content.length > 252 ) content = content.substring( 0, 252 ) + '...';
-      }
-      if( mime == 'text/x-url' )
-      {
-        var a = document.createElement( 'a' );
-        a.setAttribute( 'href', content );
-        t = new String( a.href );
-        t = t.replace( a.pathname, '' );
-        t = t.replace( 'http:', '' );
-        t = t.replace( 'https:', '' );
-        t = t.replace( '/', '' );
-        //t = t + ' ' + new String( a.pathname ).replace( /[^a-zA-Z0-9]/g, ' ' );
-        t = t.replace( '/', '' );
-      }
-      if( mime == 'image/jpeg' )
-      {
-        t = 'Photo';
-      }
       var json = r.responseText;
       console.log( 'Chirp response: ' + json );
       if( json == '' || json.substring( 0, 1 ) != '{' )
@@ -433,7 +424,7 @@ function chirpOut( content, mime, callback )
       var chirp = eval( '( ' + json + ' )' );
       chirp.mimetype = mime;
       chirp.content = content;
-      chirp.title = t;
+      chirp.title = chirpTitle;
       chirp.date = new Date().getTime();
       currentChirp = 'chirp_' + chirp.shortcode;
       chirps[ currentChirp ] = chirp;
