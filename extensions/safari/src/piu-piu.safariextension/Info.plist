@@ -1,0 +1,120 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<key>Author</key>
+	<string>Michael Barchy</string>
+	<key>Builder Version</key>
+	<string>8536.26.17</string>
+	<key>CFBundleDisplayName</key>
+	<string>piu-piu</string>
+	<key>CFBundleIdentifier</key>
+	<string>tk.widgit.piu-piu</string>
+	<key>CFBundleInfoDictionaryVersion</key>
+	<string>6.0</string>
+	<key>CFBundleShortVersionString</key>
+	<string>0.0.3</string>
+	<key>CFBundleVersion</key>
+	<string>1</string>
+	<key>Chrome</key>
+	<dict>
+		<key>Context Menu Items</key>
+		<array>
+			<dict>
+				<key>Command</key>
+				<string>menuURL</string>
+				<key>Identifier</key>
+				<string>ctxMenu</string>
+				<key>Title</key>
+				<string>piu-piu :: chirp current page URL</string>
+			</dict>
+			<dict>
+				<key>Command</key>
+				<string>menuManage</string>
+				<key>Identifier</key>
+				<string>ctxManage</string>
+				<key>Title</key>
+				<string>piu-piu :: manage chirps</string>
+			</dict>
+			<dict>
+				<key>Command</key>
+				<string>menuAbout</string>
+				<key>Identifier</key>
+				<string>ctxAbout</string>
+				<key>Title</key>
+				<string>piu-piu :: about</string>
+			</dict>
+		</array>
+		<key>Global Page</key>
+		<string>menu.html</string>
+		<key>Menus</key>
+		<array>
+			<dict>
+				<key>Identifier</key>
+				<string>menu</string>
+				<key>Menu Items</key>
+				<array>
+					<dict>
+						<key>Command</key>
+						<string>menuURL</string>
+						<key>Identifier</key>
+						<string>menuURL</string>
+						<key>Title</key>
+						<string>Chirp current page URL</string>
+					</dict>
+					<dict>
+						<key>Command</key>
+						<string>menuManage</string>
+						<key>Identifier</key>
+						<string>menuManage</string>
+						<key>Title</key>
+						<string>Manage chirps</string>
+					</dict>
+					<dict>
+						<key>Command</key>
+						<string>menuAbout</string>
+						<key>Identifier</key>
+						<string>menuAbout</string>
+						<key>Title</key>
+						<string>About piu-piu</string>
+					</dict>
+				</array>
+			</dict>
+		</array>
+		<key>Toolbar Items</key>
+		<array>
+			<dict>
+				<key>Identifier</key>
+				<string>button</string>
+				<key>Image</key>
+				<string>logo.png</string>
+				<key>Label</key>
+				<string>piu-piu</string>
+				<key>Menu</key>
+				<string>menu</string>
+			</dict>
+		</array>
+	</dict>
+	<key>Content</key>
+	<dict>
+		<key>Scripts</key>
+		<dict/>
+	</dict>
+	<key>Description</key>
+	<string>Chirp text, images and URLs from your Safari Browser.</string>
+	<key>ExtensionInfoDictionaryVersion</key>
+	<string>1.0</string>
+	<key>Permissions</key>
+	<dict>
+		<key>Website Access</key>
+		<dict>
+			<key>Include Secure Pages</key>
+			<true/>
+			<key>Level</key>
+			<string>All</string>
+		</dict>
+	</dict>
+	<key>Website</key>
+	<string>http://widgit.tk/piu-piu</string>
+</dict>
+</plist>
