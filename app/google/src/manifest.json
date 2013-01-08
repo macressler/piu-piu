@@ -1,0 +1,18 @@
+{
+  "default_locale": "en",
+  "name": "__MSG_manifest_name__",
+  "version": "0.0.3",
+  "manifest_version": 2,  
+  "description": "__MSG_manifest_description__",
+  "app": {
+    "urls": [
+      "*://widgit.tk/piu-piu/"
+    ],
+    "launch": {
+      "web_url": "http://widgit.tk/piu-piu/"
+    }
+  },
+  "icons": {
+    "128": "logo128.png"
+  }  
+}
